@@ -36,7 +36,8 @@ public class Test {
     }
 
     public static void main(String[] args) {
-        g().printMatAd();
+//        System.out.println(g().generarArista(1, 3));
+        g().combinar();
     }
 
 }

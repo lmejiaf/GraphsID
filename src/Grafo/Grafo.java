@@ -5,6 +5,7 @@
  */
 package Grafo;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -19,6 +20,7 @@ public class Grafo {
     private Vertice vertices[];
     private Arista aristas[];
     private int[][] matAd;
+
     public Grafo(Vertice vertices[], Arista aristas[]) {
         this.vertices = vertices;
         this.aristas = aristas;
@@ -54,31 +56,12 @@ public class Grafo {
             dict.get(vertice.getId()).addAll(ad);
             ad.clear();
 
-//            //se comprobó que los vertices quedaron bien guardados y aristas bien relacionadas
-//            System.out.println("resultado de vertices:");
-//            for (Arista arista : vertice.getAristas()) {
-//                System.out.println(vertice.getId() + "-->" + arista.getFin().getId());
-//            }
         }
-//                                    System.out.println("Break for debug");
 
-        //warning: hay problema con el diccionario, se esan repitiendo los elementos
-//        System.out.println("------------");
-//        System.out.println("resultados del diccionario: ");
-//        for (String key : dict.keySet()) {
-//            System.out.println(dict.get(key).size());
-//        }
-//        for (String key : dict.keySet()) {
-//            System.out.println(key+": ");
-//            for (String elem :  dict.get(key)) {
-//                System.out.print(elem);
-//            }
-//            System.out.println("");
-//        }
         return dict;
     }
+    //generar matriz etiquetada con los id de cada vertice
 
-//    //generar matriz etiquetada con los id de cada vertice
     private String[][] etiquetacion() {
         TreeMap<String, ArrayList<String>> dict = crearDiccionario();
         Set<String> Ids = dict.keySet();
@@ -90,35 +73,19 @@ public class Grafo {
             k++;
 
         }
-//        for (String[] strings : mat) {
-//            for (int i = 0; i < strings.length; i++) {
-//                if (strings[i] == null) {
-//                    System.out.print(" 0 ");
-//                } else {
-//                    System.out.print(" " + strings[i] + " ");
-//                }
-//
-//            }
-//            System.out.println("");
-//        }
 
         return mat;
     }
 
-//    //generar posiciones dada las coordenadas(idx,idy)
+    //generar posiciones dada las coordenadas(idx,idy)
     private int[] generarPos(String idx, String idy) {
 
         String mat[][] = etiquetacion();
-        // warning:  hacer el cambio en las aristas de cada vertice para que el fin no sea el inicio
-//        System.out.println(idx+", "+idy);
+
         String etiquetas[] = mat[0];
-//        System.out.println("etiquetas: ");
-//        for (int i = 0; i < etiquetas.length; i++) {
-//            System.out.print(etiquetas[i]+" ");
-//        }
-//        System.out.println("");
+
         int pos[] = new int[2];
-//        System.out.println("entrada: " + "(" + idx + ", " + idy + ")");
+
         for (int i = 0; i < etiquetas.length; i++) {
             String etiqueta = etiquetas[i];
 
@@ -128,13 +95,12 @@ public class Grafo {
             if (etiqueta != null && etiqueta.compareTo(idy) == 0) {
                 pos[1] = i;
             }
-//            System.out.println("salida: " + pos[0] + ", " + pos[1]);
 
         }
         return pos;
     }
 
-//    // generar la matriz String de adyacencia con la definicion del diccionario
+    // generar la matriz String de adyacencia con la definicion del diccionario
     private String[][] matAdString() {
         int pos[];
         int px, py;
@@ -151,12 +117,7 @@ public class Grafo {
                 mat[px][py] = "1";
             }
         }
-//        for (int i = 0; i < mat.length; i++) {
-//            for (int j = 0; j < mat.length; j++) {
-//                System.out.print("[" + mat[i][j] + "]");
-//            }
-//            System.out.println("");
-//        }
+
         return mat;
     }
 
@@ -177,12 +138,6 @@ public class Grafo {
             }
 
         }
-//        for (int i = 0; i < adyacencia.length; i++) {
-//            for (int j = 0; j < adyacencia.length; j++) {
-//                System.out.print("[" + adyacencia[i][j] + "]");
-//            }
-//            System.out.println("");
-//        }
 
         return adyacencia;
     }
@@ -197,5 +152,87 @@ public class Grafo {
             System.out.println("");
         }
     }
-    
+
+    //reducir la matriz del grafo por medio de la diagonal principal
+    public int[][] reducir() {
+        int mat[][] = matAd;
+        for (int i = 0; i < mat.length; i++) {
+            for (int j = i; j < mat.length; j++) {
+                mat[j][i] = 0;
+            }
+        }
+        return mat;
+    }
+
+    //generar la posicion dados los indices
+    public String generarArista(int x, int y) {
+        String[] etiqueta = etiquetacion()[0];
+        String indice = etiqueta[x] + "," + etiqueta[y];
+        return indice;
+    }
+
+    //extraer las listas para la futura combinatoria
+    public ArrayList<String[]> generarListas() {
+        ArrayList<String[]> listas = new ArrayList<>();
+        String[][] mat = matAdString();
+        int k = 0;
+        for (int i = mat.length - 1; i > 0; i--) {
+            String[] col = new String[mat.length];
+            for (int j = 1; j < mat.length; j++) {
+                if (mat[j][i] != null && mat[j][i].compareTo("1") == 0) {
+                    col[k] = generarArista(j, i);
+                    k++;
+                }
+            }
+            listas.add(col);
+            k = 0;
+        }
+//        for (String[] strings : listas) {
+//            for (String string : strings) {
+//                System.out.println(string);
+//            }
+//            System.out.println("");
+//        }
+        return listas;
+    }
+
+    // combinatoria entre aristas adyacentes
+    public void combinar() {
+        ArrayList<String[]> listas = generarListas();
+//        ArrayList<Boolean[]> li = new ArrayList<>();
+        ArrayList<String[]> matchings = new ArrayList<>();
+        ArrayList<String> endpoints = new ArrayList<>();
+
+        String tag = "";
+        String[] principal = listas.get(0);
+
+        
+    }
+    //comb
+
 }
+
+//    static BigInteger combinatoria(BigInteger n, BigInteger k) {
+//        BigInteger fn = BigInteger.ONE;
+//        BigInteger fn_k = BigInteger.ONE;
+//        BigInteger fk = BigInteger.ONE;
+//        BigInteger res = BigInteger.ONE;
+//        if (n.compareTo(k) == 0) {
+//            return BigInteger.ONE;
+//        }
+//        for (BigInteger i = BigInteger.ONE; i.compareTo(n) <= 0; i = i.add(BigInteger.ONE)) {
+//            fn = fn.multiply(i);
+//        }
+//        for (BigInteger i = BigInteger.ONE; i.compareTo(n.subtract(k)) <= 0; i = i.add(BigInteger.ONE)) {
+//            fn_k = fn_k.multiply(i);
+//        }
+//        for (BigInteger i = BigInteger.ONE; i.compareTo(k) <= 0; i = i.add(BigInteger.ONE)) {
+//            fk = fk.multiply(i);
+//        }
+//
+//        res = fn.divide(fk.multiply(fn_k));
+//        if (res.toString().length() > 5) {
+//            res = new BigInteger(res.toString().substring(0, 5));
+//        }
+//        return res;
+//    }}
