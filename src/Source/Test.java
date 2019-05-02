@@ -8,6 +8,7 @@ package Source;
 import Grafo.Arista;
 import Grafo.Grafo;
 import Grafo.Vertice;
+import java.util.Scanner;
 
 /**
  *
@@ -25,10 +26,15 @@ public class Test {
         Vertice F = new Vertice("F");
         Vertice G = new Vertice("G");
 
-        Vertice vertices[] = {A, B, C};
+        Vertice vertices[] = {A, B, C, D, E, F};
         Arista aristas[] = {
             new Arista(A, B, 1), new Arista(B, A, 1), new Arista(B, C, 1),
-            new Arista(C, B, 1), new Arista(C, A, 1), new Arista(A, C, 1)};
+            new Arista(C, B, 1), new Arista(C, A, 1), new Arista(A, C, 1),
+            new Arista(C, D, 1), new Arista(D, C, 1), new Arista(D, E, 1),
+            new Arista(E, D, 1), new Arista(A, D, 1), new Arista(D, A, 1),
+            new Arista(C, F, 1), new Arista(F, C, 1), new Arista(B, E, 1),
+            new Arista(E, B, 1)
+        };
 
         Grafo g = new Grafo(vertices, aristas);
 
@@ -37,7 +43,11 @@ public class Test {
 
     public static void main(String[] args) {
 //        System.out.println(g().generarArista(1, 3));
-        g().combinar();
+        Scanner leer = new Scanner(System.in);
+        System.out.println("Digite un K menor o igual(<=) al conjunto de aristas del grafo");
+        int k = leer.nextInt();
+
+        g().MMM(k);
     }
 
 }

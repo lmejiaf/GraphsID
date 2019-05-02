@@ -5,8 +5,9 @@
  */
 package Grafo;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
@@ -20,6 +21,7 @@ public class Grafo {
     private Vertice vertices[];
     private Arista aristas[];
     private int[][] matAd;
+    boolean visitado[];
 
     public Grafo(Vertice vertices[], Arista aristas[]) {
         this.vertices = vertices;
@@ -32,6 +34,8 @@ public class Grafo {
             }
         }
         this.matAd = generarMatrizDeAdyacencia();
+        visitado = new boolean[matAd.length];
+
     }
 
     //generar diccionario de adyacencia
@@ -174,13 +178,13 @@ public class Grafo {
     //extraer las listas para la futura combinatoria
     public ArrayList<String[]> generarListas() {
         ArrayList<String[]> listas = new ArrayList<>();
-        String[][] mat = matAdString();
+        int[][] mat = reducir();
         int k = 0;
-        for (int i = mat.length - 1; i > 0; i--) {
+        for (int i = mat.length - 1; i >= 0; i--) {
             String[] col = new String[mat.length];
-            for (int j = 1; j < mat.length; j++) {
-                if (mat[j][i] != null && mat[j][i].compareTo("1") == 0) {
-                    col[k] = generarArista(j, i);
+            for (int j = 0; j < mat.length; j++) {
+                if (mat[j][i] == 1) {
+                    col[k] = generarArista(j + 1, i + 1);
                     k++;
                 }
             }
@@ -196,43 +200,136 @@ public class Grafo {
         return listas;
     }
 
-    // combinatoria entre aristas adyacentes
-    public void combinar() {
-        ArrayList<String[]> listas = generarListas();
-//        ArrayList<Boolean[]> li = new ArrayList<>();
-        ArrayList<String[]> matchings = new ArrayList<>();
-        ArrayList<String> endpoints = new ArrayList<>();
+    //crear el vector de todas las aristas aptas para combinatoria
+    public String[] aristasReducidas() {
 
-        String tag = "";
-        String[] principal = listas.get(0);
+        ArrayList<String[]> l = generarListas();
+        String[] edgesToMatch = new String[aristas.length / 2];
+        int i = 0;
+        for (String[] strings : l) {
+            for (String string : strings) {
+                if (string != null) {
+                    edgesToMatch[i] = string;
+//                    System.out.println(edgesToMatch[i]);
+                    i++;
+                }
+            }
+        }
 
-        
+        return edgesToMatch;
     }
-    //comb
+
+    public void Perm2(String[] elem, String act, int n, int r, ArrayList<String> MaxMatchs) {
+        if (n == 0) {
+
+            String[] a = act.split(";");
+            ArrayList<String> endpoints = new ArrayList<>();
+
+            for (int i = 0; i < a.length; i++) {
+                String matchs = a[i];
+                if (!endpoints.contains(matchs.split(",")[0]) && !endpoints.contains(matchs.split(",")[1])) {
+                    endpoints.add(matchs.split(",")[0]);
+                    endpoints.add(matchs.split(",")[1]);
+
+                }
+            }
+            int inicio = 0;
+            String MM = "";
+            for (int i = 0; i < endpoints.size(); i = i + 2) {
+
+                String edge = endpoints.get(i) + "," + endpoints.get(i + 1);
+                MM += edge + ";";
+            }
+            MM = MM.trim();
+            MM = MM.substring(0, MM.length() - 1);
+
+            if (!MM.isEmpty()) {
+//                System.out.println(MM);
+                MaxMatchs.add(MM);
+            }
+
+        } else {
+            for (int i = 0; i < r; i++) {
+//                ArrayList<String> endpoints = new ArrayList<>();
+                if (!act.contains(elem[i])) { // Controla que no haya repeticiones
+                    Perm2(elem, act + elem[i] + ";", n - 1, r, MaxMatchs);
+                }
+            }
+        }
+    }
+
+    public ArrayList<String[]> maximalMatchings() {
+
+        String aristas[] = aristasReducidas();
+////        ArrayList<String> ariReduct = new ArrayList();
+//        for (String arista : aristas) {
+//            ariReduct.add(arista);
+//            System.out.println(arista);
+//        }
+        System.out.println("............................");
+        ArrayList<String> PosibleMaxMatchs = new ArrayList();
+        ArrayList<String[]> MaxMatchs = new ArrayList();
+
+        Perm2(aristas, "", aristas.length, aristas.length, PosibleMaxMatchs);
+        Collections.sort(PosibleMaxMatchs);
+        Set<String> hs = new HashSet<>();
+        hs.addAll(PosibleMaxMatchs);
+        PosibleMaxMatchs.clear();
+        PosibleMaxMatchs.addAll(hs);
+        Collections.sort(PosibleMaxMatchs);
+
+        //filtración de resultados para saber si son Maximal
+        for (String PosibleMaxMatch : PosibleMaxMatchs) {
+            String[] mm = PosibleMaxMatch.split(";");
+            if (comparar(mm) == true) {
+                MaxMatchs.add(mm);
+            }
+        }
+        return MaxMatchs;
+    }
+
+    //comparar endpoints de matching con endpoints del grafo
+    public boolean comparar(String[] matching) {
+        ArrayList<String> endPointsMatching = new ArrayList<>();
+        String aristas[] = aristasReducidas();
+
+        for (int i = 0; i < matching.length; i++) {
+            String Ei = matching[i].split(",")[0];
+            String Ef = matching[i].split(",")[1];
+            endPointsMatching.add(Ei);
+            endPointsMatching.add(Ef);
+        }
+        for (int i = 0; i < endPointsMatching.size(); i++) {
+            for (int j = 0; j < aristas.length; j++) {
+                if (!endPointsMatching.contains(aristas[j].split(",")[0]) && !endPointsMatching.contains(aristas[j].split(",")[1])) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    //cuales de los Maximal Matching son MMM(Grafo g, numero de aristas k):
+    public void MMM(int k) {
+        boolean existe = false;
+        if (k <= aristas.length / 2) {
+            ArrayList<String[]> matchs = maximalMatchings();
+            for (String[] match : matchs) {
+                if (match.length <= k) {
+                    existe = true;
+                    for (String edge : match) {
+                        System.out.print(edge + " ");
+                    }
+                    System.out.println("");
+                }
+            }
+            if (existe == false) {
+                System.out.println("No existe un Maximal Matching con una cantidad de aristas menor o igual a " + k);
+            }
+        } else {
+            System.out.println("el entero k dado no es válido");
+        }
+    }
 
 }
-
-//    static BigInteger combinatoria(BigInteger n, BigInteger k) {
-//        BigInteger fn = BigInteger.ONE;
-//        BigInteger fn_k = BigInteger.ONE;
-//        BigInteger fk = BigInteger.ONE;
-//        BigInteger res = BigInteger.ONE;
-//        if (n.compareTo(k) == 0) {
-//            return BigInteger.ONE;
-//        }
-//        for (BigInteger i = BigInteger.ONE; i.compareTo(n) <= 0; i = i.add(BigInteger.ONE)) {
-//            fn = fn.multiply(i);
-//        }
-//        for (BigInteger i = BigInteger.ONE; i.compareTo(n.subtract(k)) <= 0; i = i.add(BigInteger.ONE)) {
-//            fn_k = fn_k.multiply(i);
-//        }
-//        for (BigInteger i = BigInteger.ONE; i.compareTo(k) <= 0; i = i.add(BigInteger.ONE)) {
-//            fk = fk.multiply(i);
-//        }
-//
-//        res = fn.divide(fk.multiply(fn_k));
-//        if (res.toString().length() > 5) {
-//            res = new BigInteger(res.toString().substring(0, 5));
-//        }
-//        return res;
-//    }}

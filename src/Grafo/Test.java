@@ -16,10 +16,6 @@ public class Test {
     public static void main(String[] args) {
         String id = "letras";
         String adyac[] = {"a", "b", "c"};
-
-        Hashtable<String, String[]> dict = new Hashtable<>();
-
-        dict.put(id, adyac);
-        System.out.println(dict.get(id)[1]);
+        System.out.println(id.substring(1, 2));
     }
 }
